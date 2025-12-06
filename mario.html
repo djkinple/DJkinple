@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超級編輯大冒險 (Super Editor Bros)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #5c94fc; /* 瑪利歐的天空藍 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: "Arial", sans-serif;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 4px 4px 0 #000;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border: 4px solid #000;
+        }
+
+        canvas {
+            display: block;
+            background-color: #5c94fc;
+        }
+
+        /* UI 介面 */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 讓點擊穿透 */
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* 遊戲結束/獲勝畫面 */
+        #message-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 10px;
+            border: 4px solid white;
+            display: none; /* 預設隱藏 */
+            pointer-events: auto;
+        }
+
+        .btn {
+            background: #e70012; /* 瑪利歐紅 */
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .btn:hover { background: #ff4d4d; }
+
+        .controls-hint {
+            margin-top: 10px;
+            color: white;
+            font-size: 0.9rem;
+            text-shadow: 1px 1px 2px black;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🍄 超級編輯大冒險</h1>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+        
+        <div class="ui-layer">
+            <div id="score-display">SCORE: 0</div>
+            <div id="world-display">WORLD 1-1</div>
+        </div>
+
+        <div id="message-screen">
+            <h2 id="msg-title" style="color:#ffd700; margin:0 0 10px 0; font-size:2.5rem;">YOU WIN!</h2>
+            <p id="msg-desc" style="color:white;">恭喜到達終點！</p>
+            <button class="btn" onclick="resetGame()">再玩一次</button>
+        </div>
+    </div>
+
+    <div class="controls-hint">
+        操控方式：⬅️ ➡️ 左右移動 | ⬆️ 或 空白鍵 跳躍 | 掉落虛空即失敗
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const msgScreen = document.getElementById('message-screen');
+        const msgTitle = document.getElementById('msg-title');
+        const msgDesc = document.getElementById('msg-desc');
+
+        // --- 遊戲參數 ---
+        const GRAVITY = 0.5;
+        const FRICTION = 0.8; // 摩擦力 (0~1)
+        const SPEED = 5;
+        const JUMP_FORCE = 12;
+
+        // --- 遊戲狀態 ---
+        let gameRunning = true;
+        let score = 0;
+        let cameraX = 0; // 攝影機位置
+
+        // --- 按鍵狀態 ---
+        const keys = {
+            right: false,
+            left: false,
+            up: false
+        };
+
+        // --- 玩家物件 ---
+        let player = {
+            x: 100,
+            y: 100,
+            width: 30,   // 主角寬度
+            height: 30,  // 主角高度
+            dx: 0,       // 水平速度
+            dy: 0,       // 垂直速度
+            grounded: false,
+            color: '#e70012' // 紅色瑪利歐
+        };
+
+        // --- 關卡設計 (平台列表) ---
+        // x, y, w, h: 位置與大小
+        // type: 'ground' (一般地), 'block' (磚塊), 'goal' (終點旗), 'coin' (金幣), 'lava' (岩漿)
+        let platforms = [];
+        
+        // 為了方便，我們用一個函數來初始化關卡
+        function initLevel() {
+            platforms = [];
+            score = 0;
+            document.getElementById('score-display').innerText = "SCORE: " + score;
+            
+            // 1. 地板 (長長的一條)
+            createPlatform(0, 400, 1000, 50, 'ground'); 
+            createPlatform(1200, 400, 800, 50, 'ground'); // 坑洞後的地板
+            
+            // 2. 浮空平台
+            createPlatform(300, 300, 100, 40, 'block');
+            createPlatform(500, 220, 100, 40, 'block');
+            createPlatform(700, 300, 100, 40, 'block');
+            
+            // 3. 階梯
+            createPlatform(1300, 300, 50, 20, 'block');
+            createPlatform(1450, 200, 50, 20, 'block');
+            createPlatform(1600, 100, 200, 40, 'block'); // 高處平台
+
+            // 4. 金幣 (黃色方塊)
+            createPlatform(330, 250, 20, 20, 'coin');
+            createPlatform(540, 170, 20, 20, 'coin');
+            createPlatform(740, 250, 20, 20, 'coin');
+            createPlatform(1100, 300, 20, 20, 'coin'); // 懸崖邊的誘惑
+
+            // 5. 終點 (旗桿) - 設在很遠的地方
+            createPlatform(1900, 250, 10, 150, 'pole'); // 旗桿
+            createPlatform(1910, 250, 40, 30, 'flag'); // 旗幟
+            createPlatform(1900, 350, 50, 50, 'goal'); // 終點觸發區
+        }
+
+        function createPlatform(x, y, w, h, type) {
+            platforms.push({ x, y, w, h, type, active: true });
+        }
+
+        // --- 監聽按鍵 ---
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowRight') keys.right = true;
+            if (e.code === 'ArrowLeft') keys.left = true;
+            if (e.code === 'ArrowUp' || e.code === 'Space') keys.up = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowRight') keys.right = false;
+            if (e.code === 'ArrowLeft') keys.left = false;
+            if (e.code === 'ArrowUp' || e.code === 'Space') keys.up = false;
+        });
+
+        // --- 核心邏輯 Loop ---
+        function update() {
+            if (!gameRunning) return;
+
+            // 1. 水平移動
+            if (keys.right) player.dx = SPEED;
+            else if (keys.left) player.dx = -SPEED;
+            else player.dx *= FRICTION; // 摩擦力讓它慢慢停下來
+
+            player.x += player.dx;
+
+            // 2. 垂直移動 (重力)
+            player.dy += GRAVITY;
+            player.y += player.dy;
+            player.grounded = false; // 先假設在空中
+
+            // 3. 碰撞偵測 (主角 vs 平台)
+            platforms.forEach(p => {
+                if (!p.active) return; // 如果金幣被吃掉就不算
+
+                if (player.x < p.x + p.w &&
+                    player.x + player.width > p.x &&
+                    player.y < p.y + p.h &&
+                    player.y + player.height > p.y) {
+                    
+                    // 判斷類型
+                    if (p.type === 'coin') {
+                        // 吃金幣
+                        p.active = false;
+                        score += 100;
+                        document.getElementById('score-display').innerText = "SCORE: " + score;
+                    } else if (p.type === 'goal' || p.type === 'pole') {
+                        // 到達終點
+                        gameWin();
+                    } else {
+                        // 一般碰撞 (地板/磚塊) - 只做簡單的「腳踩」判定
+                        // 如果上一幀是在平台上方，現在掉進去了，那就是踩到了
+                        if (player.dy > 0 && player.y + player.height - player.dy <= p.y) {
+                            player.grounded = true;
+                            player.dy = 0;
+                            player.y = p.y - player.height;
+                        }
+                    }
+                }
+            });
+
+            // 4. 跳躍
+            if (keys.up && player.grounded) {
+                player.dy = -JUMP_FORCE;
+                player.grounded = false;
+            }
+
+            // 5. 掉落虛空判定
+            if (player.y > canvas.height) {
+                gameOver();
+            }
+
+            // 6. 攝影機跟隨 (Side Scrolling)
+            // 當主角超過畫面中間，攝影機就往右移
+            // 攝影機目標位置 = 主角位置 - 畫布一半
+            // 這裡用簡單的跟隨：主角在哪，畫面就往哪捲
+            cameraX = player.x - canvas.width / 4; 
+            if (cameraX < 0) cameraX = 0; // 不要看到左邊的黑邊
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // --- 繪圖 Loop ---
+        function draw() {
+            // 清除畫面
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 畫背景 (簡單的雲) - 讓背景移動慢一點 (視差滾動 Parallax)
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(100 - cameraX * 0.5, 100, 60, 40);
+            ctx.fillRect(400 - cameraX * 0.5, 50, 80, 50);
+            ctx.fillRect(800 - cameraX * 0.5, 120, 70, 40);
+
+            // 儲存當前畫布狀態
+            ctx.save();
+            // 移動畫布 (模擬攝影機)
+            ctx.translate(-cameraX, 0);
+
+            // 2. 畫平台與物件
+            platforms.forEach(p => {
+                if (!p.active) return;
+
+                if (p.type === 'ground') ctx.fillStyle = '#00aa00'; // 綠色地板
+                else if (p.type === 'block') ctx.fillStyle = '#b85c00'; // 磚塊
+                else if (p.type === 'coin') ctx.fillStyle = '#ffd700'; // 金幣
+                else if (p.type === 'pole') ctx.fillStyle = '#ccc'; // 旗桿
+                else if (p.type === 'flag') ctx.fillStyle = 'red'; // 旗幟
+                else if (p.type === 'goal') ctx.fillStyle = 'rgba(0,0,0,0)'; // 透明觸發區
+                else ctx.fillStyle = '#000';
+
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                
+                // 幫金幣加個邊框
+                if (p.type === 'coin') {
+                    ctx.strokeStyle = 'orange';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(p.x, p.y, p.w, p.h);
+                }
+            });
+
+            // 3. 畫主角
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // 畫個眼睛讓他有點方向感
+            ctx.fillStyle = 'white';
+            if (player.dx >= 0) ctx.fillRect(player.x + 20, player.y + 5, 5, 5); // 向右看
+            else ctx.fillRect(player.x + 5, player.y + 5, 5, 5); // 向左看
+
+            // 還原畫布
+            ctx.restore();
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            msgTitle.innerText = "GAME OVER";
+            msgTitle.style.color = "#ff4444";
+            msgDesc.innerText = "你掉進了虛空...";
+            msgScreen.style.display = 'block';
+        }
+
+        function gameWin() {
+            gameRunning = false;
+            msgTitle.innerText = "YOU WIN!";
+            msgTitle.style.color = "#ffd700";
+            msgDesc.innerText = "太強了！收集分數：" + score;
+            msgScreen.style.display = 'block';
+        }
+
+        function resetGame() {
+            player.x = 100;
+            player.y = 100;
+            player.dx = 0;
+            player.dy = 0;
+            initLevel();
+            gameRunning = true;
+            msgScreen.style.display = 'none';
+            update();
+        }
+
+        // 啟動遊戲
+        initLevel();
+        update();
+
+    </script>
+</body>
+</html>

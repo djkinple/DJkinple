@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>誰是棒球百萬富翁 - 中職36年特別版</title>
+    <style>
+        :root {
+            --bg-dark: #1a0005;
+            --bg-light: #4a0010;
+            --btn-grad-start: #720e1e;
+            --btn-grad-end: #3d000a;
+            --gold: #ffd700;
+            --orange: #ffae42;
+            --correct: #2ecc71;
+            --wrong: #e74c3c;
+            --text: #fff0f5;
+        }
+
+        body {
+            background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            color: var(--text);
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+        }
+
+        .main-layout {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            flex-grow: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .quiz-area {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #7a2020;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo h1 { font-size: 2.5rem; color: var(--gold); margin: 0; font-weight: 900; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
+
+        .question-box {
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.6), transparent);
+            border-top: 2px solid var(--gold);
+            border-bottom: 2px solid var(--gold);
+            width: 100%;
+            padding: 30px;
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: linear-gradient(to bottom, var(--btn-grad-start), var(--btn-grad-end));
+            border: 2px solid #a04040;
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) { background: #8a1c2e; border-color: var(--gold); transform: translateY(-2px); }
+        .option-btn::before { content: attr(data-prefix); color: var(--gold); font-weight: bold; margin-right: 15px; }
+        .option-btn.selected { background: var(--orange); color: black; border-color: white; }
+        .option-btn.correct { background: var(--correct); border-color: #fff; box-shadow: 0 0 15px var(--correct); }
+        .option-btn.wrong { background: var(--wrong); border-color: #fff; }
+        .option-btn.hidden { opacity: 0; pointer-events: none; }
+
+        .lifelines { display: flex; gap: 10px; margin-bottom: 20px; }
+        .lifeline-btn {
+            flex: 1; background: #2b0505; border: 1px solid var(--gold); border-radius: 50%;
+            width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; font-size: 1.2rem; color: var(--gold);
+        }
+        .lifeline-btn:hover { background: var(--gold); color: #2b0505; }
+        .lifeline-btn.used { opacity: 0.3; cursor: not-allowed; position: relative; }
+        
+        .money-ladder { display: flex; flex-direction: column-reverse; gap: 2px; }
+        .ladder-step { display: flex; justify-content: space-between; padding: 5px 10px; font-size: 0.9rem; color: #ff9999; }
+        .ladder-step.active { background: var(--gold); color: #2b0505; border-radius: 4px; font-weight: bold; }
+        .ladder-step.milestone { color: white; font-weight: bold; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 0, 5, 0.98);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 999; text-align: center;
+        }
+        .overlay.hidden { display: none; }
+        
+        .start-btn {
+            background: linear-gradient(to bottom, #ffd700, #b8860b); color: #2b0505;
+            border: 2px solid #fff; padding: 15px 50px; font-size: 1.5rem; border-radius: 50px;
+            cursor: pointer; margin-top: 30px; font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        .start-btn:hover { transform: scale(1.05); }
+
+        .home-btn {
+            position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1);
+            color: #ffcccc; text-decoration: none; padding: 8px 15px; border-radius: 5px;
+            border: 1px solid #7a2020; z-index: 100;
+        }
+        .home-btn:hover { background: rgba(255,255,255,0.3); color: white; }
+
+        @media (max-width: 768px) {
+            .main-layout { flex-direction: column; }
+            .sidebar { flex-direction: row-reverse; align-items: center; }
+            .money-ladder { display: none; }
+            .question-box { font-size: 1.2rem; padding: 15px; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn">🏠 回大廳</a>
+
+    <!-- 開始畫面 -->
+    <div id="start-screen" class="overlay">
+        <h1 style="color:var(--gold); font-size:3rem; margin-bottom:0;">誰是棒球百萬富翁</h1>
+        <h2 style="color:#ffcccc; font-weight:normal;">中職 36 年 (2025) 特別版</h2>
+        <p style="color:#aaa;">挑戰 15 題，答錯一題直接歸零！</p>
+        <button class="start-btn" id="btn-start-game">開始挑戰</button>
+    </div>
+
+    <!-- 結束畫面 -->
+    <div id="end-screen" class="overlay hidden">
+        <h1 id="end-title">挑戰失敗</h1>
+        <div id="end-message" style="font-size:1.5rem; margin:20px 0;">你獲得獎金：$0</div>
+        <button class="start-btn" onclick="location.reload()">重新挑戰</button>
+    </div>
+
+    <div class="main-layout">
+        <div class="quiz-area">
+            <div class="logo"><h1>🏆 BASEBALL MILLIONAIRE</h1></div>
+            <div class="question-box" id="question-text">題目載入中...</div>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+
+        <div class="sidebar">
+            <div>
+                <h3 style="text-align:center; color:var(--gold); border-bottom:1px solid #7a2020; padding-bottom:10px;">求救錦囊</h3>
+                <div class="lifelines">
+                    <button class="lifeline-btn" id="btn-5050" title="50:50">50:50</button>
+                    <button class="lifeline-btn" id="btn-phone" title="Call Out">📞</button>
+                    <button class="lifeline-btn" id="btn-audience" title="觀眾投票">👥</button>
+                </div>
+            </div>
+            <div class="money-ladder" id="money-ladder"></div>
+        </div>
+    </div>
+
+    <script>
+        // 獎金結構
+        var prizes = [
+            "1,000", "2,000", "3,000", "5,000", "10,000",
+            "20,000", "40,000", "80,000", "150,000", "300,000",
+            "500,000", "1,000,000", "2,500,000", "5,000,000", "10,000,000"
+        ];
+
+        // 題目資料
+        var questions = [
+            { q: "2025年中華職棒正式迎來「第六隊」在一軍出賽，請問這支球隊是？", options: ["味全龍", "台鋼雄鷹", "樂天桃猿", "富邦悍將"], a: 1 },
+            { q: "2025年球季，中華職棒一軍例行賽的總隊伍數為幾隊？", options: ["4隊", "5隊", "6隊", "7隊"], a: 2 },
+            { q: "位於台北市精華地段，於2024年啟用並在2025年成為各隊熱門主場的室內棒球場是？", options: ["高雄巨蛋", "台北小巨蛋", "臺北大巨蛋", "桃園巨蛋"], a: 2 },
+            { q: "台鋼雄鷹隊的隊徽與吉祥物是以哪種動物為形象？", options: ["老虎", "老鷹", "獅子", "大象"], a: 1 },
+            { q: "2025年球季，富邦悍將陣中擁有大聯盟資歷，被球迷稱為「國防部長」的球星是？", options: ["張育成", "林子偉", "王柏融", "吳念庭"], a: 0 },
+            { q: "職棒36年（2025），台鋼雄鷹的總教練是由哪位「諸葛紅中」領軍？", options: ["林威助", "洪一中", "陳金鋒", "葉君璋"], a: 1 },
+            { q: "2025年球季為了加快比賽節奏，聯盟更嚴格執行了哪項規定？", options: ["禁止盜壘", "投球計時器 (Pitch Clock)", "限制換投次數", "縮小好球帶"], a: 1 },
+            { q: "在2024年底選秀會或自由球員市場變動後，哪位球員是目前中職薪資最高的「薪一哥」？", options: ["江少慶", "王維中", "張育成", "林智勝"], a: 2 },
+            { q: "統一獅隊為了紀念哪位王牌投手引退（2024），在台南球場設立了相關紀念設施？", options: ["高國慶", "潘威倫", "潘武雄", "林岳平"], a: 1 },
+            { q: "2025年的明星賽（All-Star Game），通常會採用什麼分隊方式？", options: ["南軍 vs 北軍", "中華隊 vs 明星隊", "本島 vs 外島", "洋將 vs 土投"], a: 1 },
+            { q: "中職36年，關於「洋將名額」的規定，新軍台鋼雄鷹是否還享有「多一名洋將」的優惠？", options: ["是，第一年一軍有優惠", "否，比照其他五隊", "只有投手有優惠", "只有打者有優惠"], a: 0 },
+            { q: "以下哪個球場「不是」2025年中華職棒例行賽的常駐主場？", options: ["新莊棒球場", "天母棒球場", "屏東棒球場", "洲際棒球場"], a: 2 },
+            { q: "如果2025年總冠軍賽打到第7戰，通常會在哪個月份進行？", options: ["9月", "10月底或11月初", "12月", "8月"], a: 1 },
+            { q: "中職單季「全壘打王」的紀錄支數是多少支（截至2025開季前）？", options: ["31支", "33支", "39支", "42支"], a: 2 },
+            { q: "【千萬獎金題】2025年（職棒36年）台灣大賽，最終是由哪支球隊擊敗強敵，拋下勝利的紅色彩帶奪下總冠軍？", options: ["味全龍", "中信兄弟", "樂天桃猿", "統一獅"], a: 2 }
+        ];
+
+        var currentLevel = 0;
+        var isGameOver = false;
+        var usedLifelines = { "5050": false, "phone": false, "audience": false };
+
+        // 綁定按鈕事件
+        document.getElementById('btn-start-game').onclick = startGame;
+        document.getElementById('btn-5050').onclick = use5050;
+        document.getElementById('btn-phone').onclick = usePhone;
+        document.getElementById('btn-audience').onclick = useAudience;
+
+        function initLadder() {
+            var ladderDiv = document.getElementById('money-ladder');
+            ladderDiv.innerHTML = '';
+            for (var i = 0; i < prizes.length; i++) {
+                var step = document.createElement('div');
+                step.className = 'ladder-step';
+                if (i % 5 === 4) step.className += ' milestone';
+                step.id = 'step-' + i;
+                step.innerHTML = '<span class="step-num">' + (i + 1) + '</span><span>$' + prizes[i] + '</span>';
+                ladderDiv.appendChild(step);
+            }
+        }
+
+        function startGame() {
+            currentLevel = 0;
+            isGameOver = false;
+            usedLifelines = { "5050": false, "phone": false, "audience": false };
+            
+            var lifelines = document.querySelectorAll('.lifeline-btn');
+            lifelines.forEach(function(btn) {
+                btn.classList.remove('used');
+                btn.disabled = false;
+            });
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            initLadder();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            var qData = questions[currentLevel];
+            
+            // 更新階梯
+            var steps = document.querySelectorAll('.ladder-step');
+            steps.forEach(function(s) { s.classList.remove('active'); });
+            document.getElementById('step-' + currentLevel).classList.add('active');
+
+            document.getElementById('question-text').innerText = qData.q;
+            
+            var container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            var prefixes = ['A', 'B', 'C', 'D'];
+            
+            // 產生選項
+            for (var i = 0; i < 4; i++) {
+                (function(index) {
+                    var btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.setAttribute('data-prefix', prefixes[index]);
+                    btn.innerText = qData.options[index];
+                    btn.id = 'opt-' + index;
+                    btn.onclick = function() { checkAnswer(index); };
+                    container.appendChild(btn);
+                })(i);
+            }
+        }
+
+        function checkAnswer(selectedIdx) {
+            if (isGameOver) return;
+            var correctIdx = questions[currentLevel].a;
+            var selectedBtn = document.getElementById('opt-' + selectedIdx);
+            var correctBtn = document.getElementById('opt-' + correctIdx);
+            
+            var allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(function(btn) { btn.disabled = true; });
+
+            if (selectedIdx === correctIdx) {
+                selectedBtn.classList.add('correct');
+                setTimeout(function() {
+                    if (currentLevel < 14) {
+                        currentLevel++;
+                        loadQuestion();
+                    } else {
+                        gameWin();
+                    }
+                }, 1500);
+            } else {
+                selectedBtn.classList.add('wrong');
+                correctBtn.classList.add('correct');
+                setTimeout(gameOver, 2000);
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('end-title').innerText = "挑戰失敗！";
+            document.getElementById('end-title').style.color = "#e74c3c";
+            
+            var prizeText = "$0";
+            if (currentLevel >= 10) prizeText = "$300,000";
+            else if (currentLevel >= 5) prizeText = "$10,000";
+            
+            document.getElementById('end-message').innerText = "很遺憾！你帶走的獎金：" + prizeText;
+        }
+
+        function gameWin() {
+            isGameOver = true;
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('end-title').innerText = "恭喜奪冠！";
+            document.getElementById('end-title').style.color = "#d4af37";
+            document.getElementById('end-message').innerText = "獲得獎金：$10,000,000";
+        }
+
+        function use5050() {
+            if (usedLifelines["5050"]) return;
+            usedLifelines["5050"] = true;
+            document.getElementById('btn-5050').classList.add('used');
+            
+            var correctIdx = questions[currentLevel].a;
+            var removed = 0;
+            while (removed < 2) {
+                var rand = Math.floor(Math.random() * 4);
+                var btn = document.getElementById('opt-' + rand);
+                if (rand !== correctIdx && !btn.classList.contains('hidden')) {
+                    btn.classList.add('hidden');
+                    removed++;
+                }
+            }
+        }
+
+        function usePhone() {
+            if (usedLifelines["phone"]) return;
+            usedLifelines["phone"] = true;
+            document.getElementById('btn-phone').classList.add('used');
+            var correctOpt = questions[currentLevel].options[questions[currentLevel].a];
+            alert("📞 球評連線：「我覺得答案非常有可能是『" + correctOpt + "』，加油！」");
+        }
+
+        function useAudience() {
+            if (usedLifelines["audience"]) return;
+            usedLifelines["audience"] = true;
+            document.getElementById('btn-audience').classList.add('used');
+            
+            var correctIdx = questions[currentLevel].a;
+            var stats = [10, 10, 10, 10];
+            stats[correctIdx] += 40;
+            var rem = 20;
+            while(rem > 0) {
+                stats[Math.floor(Math.random()*4)]++;
+                rem--;
+            }
+            alert("👥 觀眾投票結果：\n" +
+                  "A: " + stats[0] + "%\n" +
+                  "B: " + stats[1] + "%\n" +
+                  "C: " + stats[2] + "%\n" +
+                  "D: " + stats[3] + "%");
+        }
+    </script>
+</body>
+</html>

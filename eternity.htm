@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>換乘真愛 (Eternity) - 靈魂轉運站</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            font-family: 'Noto Serif TC', "Times New Roman", serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #4a4a4a;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            max-height: 700px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* 頂部進度條 */
+        .header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: none; /* 簡介頁時隱藏 */
+        }
+        .day-indicator {
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* 內容區 */
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左側：視覺 */
+        .visual-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(161, 140, 209, 0.1));
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 海報樣式 */
+        .poster-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Emoji 動畫樣式 (遊戲中用) */
+        #scene-emoji {
+            font-size: 6rem;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+            animation: float 3s ease-in-out infinite;
+            display: none; /* 預設隱藏 */
+        }
+        @keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-15px);} 100% {transform: translateY(0px);} }
+
+        /* 右側：對話 */
+        .dialogue-area {
+            flex: 1.5;
+            padding: 25px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .title-group {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .main-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        .sub-title {
+            font-size: 1rem;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            color: #2d3436;
+        }
+
+        .intro-text {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.8;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #a18cd1;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+        }
+
+        .btn {
+            padding: 18px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #555;
+            transition: all 0.2s;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .btn:hover {
+            background: #fdfdfd;
+            border-color: #a18cd1;
+            color: #a18cd1;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(161, 140, 209, 0.15);
+        }
+        .btn:active { transform: scale(0.98); }
+
+        .start-btn {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: white;
+            border: none;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        .start-btn:hover {
+            color: white;
+            opacity: 0.9;
+            border-color: transparent;
+        }
+
+        /* 電腦版 RWD (寬度大於 768px) */
+        @media (min-width: 768px) {
+            .content-wrapper { flex-direction: row; }
+            .visual-area { flex: 1; border-right: 1px solid rgba(0,0,0,0.05); }
+            #scene-emoji { font-size: 8rem; }
+            .dialogue-area { flex: 1.2; padding: 40px; }
+            .text { font-size: 1.2rem; }
+            .title-group { text-align: left; }
+        }
+
+        /* 結局畫面 */
+        .ending-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.98);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s;
+        }
+        .ending-screen.show { opacity: 1; pointer-events: auto; }
+        
+        .end-title { font-size: 2.2rem; margin-bottom: 15px; color: #a18cd1; font-weight: bold; }
+        .end-desc { font-size: 1.1rem; color: #666; line-height: 1.8; margin-bottom: 40px; max-width: 600px; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- 進度條 (開始遊戲後顯示) -->
+        <div class="header" id="game-header">
+            <div class="day-indicator" id="day-text">DAY 1 / 7</div>
+            <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- 左側：視覺 (使用新海報連結) -->
+            <div class="visual-area">
+                <img src="https://srm.com.tw/images/%E9%9B%BB%E5%BD%B1%E6%B5%B7%E5%A0%B1/%E6%8F%9B%E4%B9%98%E7%9C%9F%E6%84%9B..webp" alt="換乘真愛海報" class="poster-img" id="poster-img">
+                <div id="scene-emoji">✨</div>
+            </div>
+
+            <!-- 右側：對話與操作 -->
+            <div class="dialogue-area">
+                
+                <!-- 1. 簡介區塊 -->
+                <div id="intro-section">
+                    <div class="title-group">
+                        <h1 class="main-title">換乘真愛 (Eternity)</h1>
+                        <div class="sub-title">靈魂轉運站的七日抉擇</div>
+                    </div>
+                    
+                    <div class="intro-text">
+                        <p>瓊安（伊莉莎白歐森 飾）與賴瑞（麥爾斯泰勒 飾）結縭 60 年，過著平凡卻充滿默契的婚姻生活。一場意外讓賴瑞離世，瓊安隨後也步入生命盡頭。</p>
+                        <p>在靈魂轉運站，瓊安變回了年輕的模樣，與賴瑞重逢。原以為是幸福的延續，卻沒想到，她在這裡遇見了那位在韓戰中陣亡、苦等她 67 年的初戀情人——路克（卡倫透納 飾）。</p>
+                        <p>一邊是陪妳走過一輩子的人，一邊是等了妳一輩子的人。</p>
+                        <p><strong>妳有七天的時間，決定妳的永恆歸屬。</strong></p>
+                    </div>
+
+                    <button class="btn start-btn" onclick="startGame()">開始抉擇 &rarr;</button>
+                </div>
+
+                <!-- 2. 遊戲區塊 -->
+                <div id="game-section" style="display: none; flex-direction: column; height: 100%;">
+                    <div class="text" id="story-text">故事載入中...</div>
+                    <div class="options" id="options-box"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 結局層 -->
+        <div id="ending-layer" class="ending-screen">
+            <div style="font-size: 5rem; margin-bottom: 20px;" id="end-emoji">🎉</div>
+            <h1 class="end-title" id="end-title">結局名稱</h1>
+            <p class="end-desc" id="end-desc">結局描述...</p>
+            <button class="btn" onclick="location.reload()" style="width:200px; text-align:center; background:#a18cd1; color:white; border:none;">重新選擇永恆</button>
+            <br>
+            <a href="index.html" style="color:#aaa; text-decoration:none; font-size:0.9rem;">回遊戲大廳</a>
+        </div>
+    </div>
+
+    <script>
+        let currentDay = 0;
+        let scoreLarry = 0; 
+        let scoreLuke = 0; 
+
+        const script = [
+            {
+                day: 1,
+                emoji: "👴🏻",
+                text: "妳在純白色的轉運站醒來，變回了年輕時的模樣。眼前是剛過世不久的丈夫【賴瑞】，他笑著向妳伸出手，一如這 60 年來的每一天。",
+                choices: [
+                    { text: "🔵 毫不猶豫地抱住他：「謝天謝地，你也在這裡。」", larry: 10, luke: 0 },
+                    { text: "⚪ 看著年輕的自己，遲疑了一下才握住他的手。", larry: 0, luke: 5 }
+                ]
+            },
+            {
+                day: 2,
+                emoji: "🪖",
+                text: "妳在人群中看到一個穿著韓戰軍服的身影。是【路克】。他在 67 年前戰死，此刻卻站在妳面前：「瓊安，為了等妳，我沒有投胎，在這裡站了 67 年。」",
+                choices: [
+                    { text: "🔴 震驚落淚：「你...你一直在等我？」", larry: 0, luke: 10 },
+                    { text: "🔵 下意識地往丈夫賴瑞身後躲了一步。", larry: 10, luke: 0 }
+                ]
+            },
+            {
+                day: 3,
+                emoji: "💌",
+                text: "路克拿出了當年沒寄出的泛黃遺書；賴瑞則拿出了妳們金婚紀念日的合照。兩段記憶同時湧上心頭。",
+                choices: [
+                    { text: "🔴 接過路克的信，想知道如果沒有戰爭的未來。", larry: 0, luke: 10 },
+                    { text: "🔵 看著金婚照片，想起賴瑞陪妳抗癌的日子。", larry: 10, luke: 0 }
+                ]
+            },
+            {
+                day: 4,
+                emoji: "💃",
+                text: "轉運站模擬了過去。路克邀妳跳那一支當年沒跳完的舞。他的手心炙熱，讓妳像是回到了 20 歲的悸動。",
+                choices: [
+                    { text: "🔴 沉浸在舞步中，心想：「如果當年他沒死...」", larry: 0, luke: 10 },
+                    { text: "🔵 跳舞時，腦中卻浮現賴瑞笨拙地幫妳過生日的樣子。", larry: 10, luke: 0 }
+                ]
+            },
+            {
+                day: 5,
+                emoji: "🕰️",
+                text: "賴瑞看出了妳的動搖，溫柔地說：「我不怪妳。路克給妳的是『如果』，但我給妳的是『真實』。我們共度的 60 年，難道都不算數了嗎？」",
+                choices: [
+                    { text: "⚪ 「那些都很珍貴，但我現在很混亂...」", larry: 0, luke: 5 },
+                    { text: "🔵 「怎麼會不算數？你才是我的一輩子。」", larry: 10, luke: 0 }
+                ]
+            },
+            {
+                day: 6,
+                emoji: "🚪",
+                text: "路克指著永恆之門：「我看著妳結婚、生子。我忍受了 67 年的孤獨，只為了這一刻。瓊安，妳忍心讓我再等一個永恆嗎？」",
+                choices: [
+                    { text: "🔴 心痛不已：「對不起...讓你受苦了。」", larry: 0, luke: 10 },
+                    { text: "🔵 殘忍地說：「但那 60 年沒有你，我也很幸福。」", larry: 10, luke: 0 }
+                ]
+            },
+            {
+                day: 7,
+                emoji: "⚖️",
+                text: "最後的日落。廣播響起：「請選擇妳的永恆歸屬。」<br>左邊是賴瑞，右邊是路克。<br>還有...兩扇隱藏的門？",
+                choices: [
+                    { text: "🔵 走向賴瑞 (選擇陪伴一生的丈夫)", type: "end_larry" },
+                    { text: "🔴 走向路克 (選擇苦守多年的初戀)", type: "end_luke" },
+                    { text: "✨ 獨自一人 (兩個我都不選！)", type: "end_solo" },
+                    { text: "🌈 全都要！ (這裡是天堂，我們三個一起吧！)", type: "end_all" }
+                ]
+            }
+        ];
+
+        function startGame() {
+            document.getElementById('poster-img').style.display = 'none';
+            document.getElementById('scene-emoji').style.display = 'block';
+            document.getElementById('intro-section').style.display = 'none';
+            document.getElementById('game-section').style.display = 'flex';
+            document.getElementById('game-header').style.display = 'block';
+            renderScene();
+        }
+
+        function renderScene() {
+            const data = script[currentDay];
+            document.getElementById('day-text').innerText = `DAY ${data.day} / 7`;
+            document.getElementById('progress').style.width = `${(data.day / 7) * 100}%`;
+            document.getElementById('scene-emoji').innerText = data.emoji;
+            document.getElementById('story-text').innerHTML = data.text;
+
+            const optsBox = document.getElementById('options-box');
+            optsBox.innerHTML = ''; 
+
+            data.choices.forEach((choice) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = choice.text;
+                if (currentDay === 6) {
+                    btn.onclick = () => showEnding(choice.type);
+                } else {
+                    btn.onclick = () => makeChoice(choice.larry, choice.luke);
+                }
+                optsBox.appendChild(btn);
+            });
+        }
+
+        function makeChoice(lAdd, luAdd) {
+            scoreLarry += lAdd;
+            scoreLuke += luAdd;
+            currentDay++;
+            if (currentDay < script.length) renderScene();
+        }
+
+        function showEnding(type) {
+            const screen = document.getElementById('ending-layer');
+            const title = document.getElementById('end-title');
+            const desc = document.getElementById('end-desc');
+            const emoji = document.getElementById('end-emoji');
+
+            screen.classList.add('show');
+
+            if (type === 'end_larry') {
+                title.innerText = "結局：細水長流的溫柔";
+                desc.innerText = "妳選擇了賴瑞。既然已經牽手走過了 60 年的風雨，那接下來的永恆，當然也要繼續牽著走下去。這就是家。";
+                emoji.innerText = "🏡";
+            } else if (type === 'end_luke') {
+                title.innerText = "結局：跨越時空的初戀";
+                desc.innerText = "妳選擇了路克。67 年的等待不該被辜負。這一次，妳們終於可以在沒有戰爭、沒有生離死別的世界裡，談一場永不結束的戀愛。";
+                emoji.innerText = "💞";
+            } else if (type === 'end_solo') {
+                title.innerText = "結局：自由的靈魂";
+                desc.innerText = "妳誰也沒有選。妳微笑著向兩位男士鞠躬道謝，然後轉身走向未知的星空。既然死了一次，這次妳想完全屬於妳自己。";
+                emoji.innerText = "🕊️";
+            } else if (type === 'end_all') {
+                title.innerText = "結局：天堂多元成家";
+                desc.innerText = "「為什麼要選？」妳一手牽起賴瑞，一手拉住路克。三個人面面相覷，最後都笑了。在永恆的國度裡，愛是沒有排他性的！";
+                emoji.innerText = "🌈";
+            }
+        }
+    </script>
+</body>
+</html>

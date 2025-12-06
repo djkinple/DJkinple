@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中華職棒 35 年史 - 棒球知識王挑戰</title>
+    <style>
+        :root {
+            --primary: #005e2f; /* 棒球場綠 */
+            --secondary: #b32b2b; /* 縫線紅 */
+            --accent: #f4c542; /* 冠軍金 */
+            --bg: #f0f2f5;
+            --text: #333;
+        }
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        .subtitle { color: #666; margin-bottom: 2rem; font-size: 0.9rem; }
+        
+        /* 遊戲區域 */
+        .game-box { display: none; }
+        .game-box.active { display: block; }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            font-weight: bold;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: #eef;
+            border-color: var(--primary);
+        }
+        .btn:disabled { cursor: default; }
+        
+        /* 答案狀態 */
+        .btn.correct { background-color: #d4edda; border-color: #28a745; color: #155724; }
+        .btn.wrong { background-color: #f8d7da; border-color: #dc3545; color: #721c24; }
+        
+        /* 解析區 */
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 8px;
+            display: none;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        
+        .next-btn {
+            margin-top: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+        }
+        .next-btn:hover { background-color: #004d26; }
+
+        /* 難度標籤 */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        .lvl-1 { background-color: #28a745; }
+        .lvl-2 { background-color: #fd7e14; }
+        .lvl-3 { background-color: #dc3545; }
+
+        /* 結算畫面 */
+        .result-score { font-size: 3rem; color: var(--primary); font-weight: bold; }
+        .result-comment { margin: 20px 0; font-size: 1.1rem; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 首頁 -->
+        <div id="start-screen" class="game-box active">
+            <h1>⚾ 中職 35 年大會考</h1>
+            <p class="subtitle">你是真球迷還是雲球迷？來挑戰這 10 道題目！</p>
+            <button class="btn" style="background:var(--primary); color:white; width:100%" onclick="startGame()">開始挑戰</button>
+        </div>
+
+        <!-- 遊戲頁面 -->
+        <div id="quiz-screen" class="game-box">
+            <div class="status-bar">
+                <span id="progress-text">第 1 / 10 題</span>
+                <span id="score-text">得分: 0</span>
+            </div>
+            
+            <div>
+                <span id="difficulty-badge" class="badge lvl-1">入門</span>
+            </div>
+            
+            <div class="question-text" id="question-display">題目載入中...</div>
+            
+            <div class="options-grid" id="options-container">
+                <!-- 選項會由 JS 產生 -->
+            </div>
+
+            <div class="explanation-box" id="explanation">
+                <strong>💡 解析：</strong> <span id="explanation-text"></span>
+            </div>
+
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 ➔</button>
+        </div>
+
+        <!-- 結算頁面 -->
+        <div id="result-screen" class="game-box">
+            <h2>挑戰結束！</h2>
+            <div class="result-score" id="final-score">80</div>
+            <p class="result-comment" id="final-comment">不錯喔！資深球迷認證！</p>
+            <button class="btn" style="background:var(--primary); color:white;" onclick="location.reload()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        // 題庫資料
+        const questionBank = [
+          { id: 1, level: 1, question: "截至 2024 年球季結束，中華職棒歷史上哪一位球員的生涯全壘打數突破 300 支，暫居聯盟歷史全壘打王？", options: ["張泰山", "彭政閔", "林智勝", "林益全"], answer: 2, explanation: "林智勝於 2023 年達成 300 轟里程碑，是中職史上第一人。" },
+          { id: 2, level: 1, question: "中華職棒元年（1990年）的四支創始球隊中，唯一母企業從未轉賣（僅更換冠名），一路經營至今的是？", options: ["兄弟象", "味全龍", "統一獅", "三商虎"], answer: 2, explanation: "統一獅自元年至今皆由統一企業經營。" },
+          { id: 3, level: 1, question: "哪一位背號「52」號的球員，是第一位登上 MLB 的台灣選手，並於 2016 年在桃園球場引退？", options: ["王建民", "陳金鋒", "郭泓志", "陽岱鋼"], answer: 1, explanation: "陳金鋒是首位登上 MLB 的台灣選手，被譽為「台灣巨砲」。" },
+          { id: 4, level: 1, question: "2024 年正式投入中華職棒例行賽使用，成為台灣第一座室內棒球場（巨蛋）的是？", options: ["高雄巨蛋", "桃園巨蛋", "台中巨蛋", "臺北大巨蛋"], answer: 3, explanation: "臺北大巨蛋於 2024 年正式成為中職例行賽場地。" },
+          { id: 5, level: 1, question: "2024 年正式升上一軍參與例行賽，成為中華職棒「第六隊」的新軍球隊是？", options: ["台鋼雄鷹", "樂天桃猿", "味全龍", "富邦悍將"], answer: 0, explanation: "台鋼雄鷹 (TSG Hawks) 於 2024 年正式加入一軍賽事。" },
+          { id: 6, level: 2, question: "Lamigo 桃猿隊的哪位選手，曾在 2016、2017 年連續兩季打擊率超過四成（四割男）？", options: ["王柏融", "林泓育", "陳傑憲", "朱育賢"], answer: 0, explanation: "王柏融在該兩年分別繳出 .414 與 .407 的恐怖數據。" },
+          { id: 7, level: 2, question: "2018 年 10 月 7 日，統一獅洋投瑞安（Ryan Verdugo）投出了中華職棒史上第一場什麼比賽？", options: ["20次三振", "無安打比賽", "完全比賽", "延長賽完封勝"], answer: 2, explanation: "這是中職 35 年來唯一的「完全比賽」。" },
+          { id: 8, level: 2, question: "2013-2016 年間，富邦悍將的前身球隊是由哪個集團經營，並奪得 2016 年總冠軍？", options: ["興農牛", "義大犀牛", "俊國熊", "米迪亞暴龍"], answer: 1, explanation: "興農牛轉賣後成為義大犀牛，奪冠後轉賣給富邦。" },
+          { id: 9, level: 2, question: "中華職棒史上單季全壘打支數最高的紀錄保持人是誰？（單季 39 轟）", options: ["林智勝", "高國輝", "陳金鋒", "吉力吉撈．鞏冠"], answer: 1, explanation: "高國輝於 2015 年創下單季 39 轟紀錄。" },
+          { id: 10, level: 2, question: "兄弟象第二次三連霸時期（2001-2003），核心「三劍客」是指哪三位？", options: ["彭政閔、陳致遠、蔡豐安", "彭政閔、周思齊、陳冠任", "王光輝、李居明、林易增", "張志豪、周思齊、張正偉"], answer: 0, explanation: "黃金三劍客為：陳致遠、彭政閔、蔡豐安。" },
+          { id: 11, level: 3, question: "1990 年職棒元年開幕戰，拿下中華職棒歷史上「第一勝」的勝投是誰？", options: ["黃平洋", "杜福明", "張永昌", "湯尼"], answer: 2, explanation: "統一獅張永昌後援登板拿下史上首勝。" },
+          { id: 12, level: 3, question: "誰是繼 1998 年怪力男後，中職史上第二位「打擊三冠王」（2017年）？", options: ["林泓育", "王柏融", "陳俊秀", "林智勝"], answer: 1, explanation: "王柏融於 2017 年包辦打擊、全壘打、打點王。" },
+          { id: 13, level: 3, question: "統一獅傳奇投手「嘟嘟」潘威倫生涯勝投數最終定格在幾勝？", options: ["141 勝", "146 勝", "149 勝", "152 勝"], answer: 2, explanation: "潘威倫生涯累計 149 勝，為目前中職紀錄保持人。" },
+          { id: 14, level: 3, question: "中華職棒史上第一支全壘打是由哪位球員擊出的？", options: ["王光輝", "林仲秋", "汪俊良", "宋榮泰"], answer: 2, explanation: "職棒元年由統一獅汪俊良擊出史上首轟。" },
+          { id: 15, level: 3, question: "2015 總冠軍賽，Lamigo 哪位投手在 G7 投出無安打比賽（No-hitter）？", options: ["蘭斯佛", "明星 (Pat Misch)", "瓦德茲", "索爾"], answer: 1, explanation: "明星（Pat Misch）在 G7 投出總冠軍賽史上唯一的無安打比賽。" }
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // 洗牌演算法
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            // 每次隨機挑 10 題
+            currentQuestions = shuffle([...questionBank]).slice(0, 10);
+            currentIndex = 0;
+            score = 0;
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('quiz-screen').classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const data = currentQuestions[currentIndex];
+            
+            // 更新進度與分數
+            document.getElementById('progress-text').innerText = `第 ${currentIndex + 1} / 10 題`;
+            document.getElementById('score-text').innerText = `得分: ${score}`;
+            
+            // 設定難度標籤
+            const badge = document.getElementById('difficulty-badge');
+            badge.className = `badge lvl-${data.level}`;
+            badge.innerText = data.level === 1 ? "入門" : data.level === 2 ? "中階" : "困難";
+
+            // 設定題目
+            document.getElementById('question-display').innerText = data.question;
+            
+            // 產生選項
+            const optsContainer = document.getElementById('options-container');
+            optsContainer.innerHTML = '';
+            
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, btn);
+                optsContainer.appendChild(btn);
+            });
+
+            // 重置 UI
+            document.getElementById('explanation').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+        }
+
+        function checkAnswer(selectedIdx, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const data = currentQuestions[currentIndex];
+            const correctIdx = data.answer;
+            const allBtns = document.querySelectorAll('.options-grid .btn');
+
+            if (selectedIdx === correctIdx) {
+                btnElement.classList.add('correct');
+                score += 10;
+                document.getElementById('score-text').innerText = `得分: ${score}`;
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[correctIdx].classList.add('correct'); // 顯示正確答案
+            }
+
+            // 鎖定所有按鈕
+            allBtns.forEach(btn => btn.disabled = true);
+
+            // 顯示解析
+            document.getElementById('explanation-text').innerText = data.explanation;
+            document.getElementById('explanation').style.display = 'block';
+            
+            // 顯示下一題按鈕
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.style.display = 'block';
+            nextBtn.innerText = (currentIndex === 9) ? "查看成績 ➔" : "下一題 ➔";
+        }
+
+        function nextQuestion() {
+            if (currentIndex < 9) {
+                currentIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            document.getElementById('final-score').innerText = score + " 分";
+            
+            let comment = "";
+            if (score === 100) comment = "太神啦！你是中職活字典！🏆";
+            else if (score >= 80) comment = "超強！資深球迷認證！👍";
+            else if (score >= 60) comment = "不錯喔，看球有一段時間了吧？⚾";
+            else comment = "沒關係，多進場看球就會變強了！🏟️";
+            
+            document.getElementById('final-comment').innerText = comment;
+        }
+    </script>
+</body>
+</html>

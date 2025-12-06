@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戀愛模擬器 Demo (修正版)</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #ffe6e6;
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; /* 增加字體相容性 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-screen {
+            width: 100%;
+            max-width: 450px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 5px solid #ff99ac;
+        }
+
+        .character-area {
+            flex: 2;
+            background-color: #f0f0f0; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            font-size: 8rem;
+        }
+        
+        .love-meter-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #e84393;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .dialog-box {
+            flex: 1;
+            background: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-top: 2px solid #ffccd5;
+            z-index: 20;
+        }
+
+        .name-tag {
+            font-weight: bold;
+            color: #d63031;
+            font-size: 1.1rem;
+        }
+
+        .text-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #2d3436;
+            min-height: 60px;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .choice-btn {
+            background: #ff7675;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.1s; /* 加快反應速度 */
+        }
+        .choice-btn:active { background: #d63031; transform: scale(0.98); }
+
+        .ending-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="game-screen">
+        
+        <!-- 畫面區 -->
+        <div class="character-area">
+            <div class="love-meter-container">
+                ❤️ 好感度: <span id="love-score">50</span>
+            </div>
+            <div id="char-img">👩🏻</div>
+        </div>
+
+        <!-- 對話區 -->
+        <div class="dialog-box">
+            <div class="name-tag" id="speaker-name">神祕女孩</div>
+            <div class="text-content" id="dialog-text">
+                （她在轉角撞到了你...）<br>
+                「啊！對不起！我有急事...咦？你是之前的編輯大大？」
+            </div>
+            
+            <div class="choices">
+                <!-- 這裡直接綁定 click 事件，比較不會出錯 -->
+                <button class="choice-btn" id="btn-1" onclick="handleInput(1)">沒事吧？我有帶OK繃。(暖男)</button>
+                <button class="choice-btn" id="btn-2" onclick="handleInput(2)">走路看路好嗎？(直男)</button>
+            </div>
+        </div>
+
+        <!-- 結局區 -->
+        <div id="ending-layer" class="ending-screen hidden">
+            <h1 id="end-title">結局</h1>
+            <p id="end-desc" style="padding: 0 20px;">描述...</p>
+            <button class="choice-btn" onclick="location.reload()" style="margin-top:30px;">重新開始</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 確保程式載入 ---
+        // 如果你看到這個彈窗，表示 JS 正常運作
+        window.onload = function() {
+            console.log("遊戲引擎已啟動");
+            // alert("遊戲載入成功！請點擊選項開始。"); // 如果覺得煩可以把這行刪掉
+        };
+
+        // --- 2. 遊戲設定 ---
+        let lovePoints = 50; 
+        let currentScene = 0; 
+
+        // --- 3. 劇本資料 ---
+        const script = [
+            {
+                text: "「啊！對不起！我有急事...咦？你是之前的編輯大大？」",
+                emotion: "👩🏻", 
+                choices: [
+                    { text: "沒事吧？我有帶OK繃。", score: 10, next: 1 },
+                    { text: "走路看路好嗎？", score: -20, next: 1 }
+                ]
+            },
+            {
+                text: "「真的很不好意思...為了賠罪，我請你喝杯咖啡吧？」(她露出期待的眼神)",
+                emotion: "😍", 
+                choices: [
+                    { text: "好啊，剛好我也想喝。", score: 10, next: 2 },
+                    { text: "不用了，我趕著回家打電動。", score: -50, next: 3 } 
+                ]
+            },
+            {
+                text: "「這家店的拿鐵很好喝喔！對了，你平常喜歡看什麼電影？」",
+                emotion: "☕", 
+                choices: [
+                    { text: "當然是恐怖片《默殺》啊！", score: 20, next: 3 }, 
+                    { text: "我不看電影，我只看財報。", score: -10, next: 3 }
+                ]
+            }
+        ];
+
+        // --- 4. 遊戲核心邏輯 ---
+        function handleInput(optionIndex) {
+            console.log("點擊了按鈕:", optionIndex); // 除錯用
+
+            // 取得目前這段劇情的資料
+            const sceneData = script[currentScene];
+            
+            // 防呆：如果找不到資料，就不執行
+            if (!sceneData) {
+                console.error("錯誤：找不到劇情資料");
+                return;
+            }
+
+            const choice = sceneData.choices[optionIndex - 1];
+
+            // 1. 更新並顯示好感度
+            lovePoints += choice.score;
+            if(lovePoints > 100) lovePoints = 100;
+            if(lovePoints < 0) lovePoints = 0;
+            document.getElementById('love-score').innerText = lovePoints;
+
+            // 2. 決定下一步
+            const nextSceneId = choice.next;
+
+            // 如果下一步超過劇本長度，就進入結局
+            if (nextSceneId >= script.length) {
+                showEnding();
+            } else {
+                // 進入下一段
+                currentScene = nextSceneId;
+                renderScene();
+            }
+        }
+
+        function renderScene() {
+            const data = script[currentScene];
+            
+            // 更新文字
+            document.getElementById('dialog-text').innerText = data.text;
+            // 更新表情 (Emoji)
+            document.getElementById('char-img').innerText = data.emotion;
+
+            // 更新按鈕文字
+            const btn1 = document.getElementById('btn-1');
+            const btn2 = document.getElementById('btn-2');
+            
+            btn1.innerText = data.choices[0].text;
+            btn2.innerText = data.choices[1].text;
+        }
+
+        function showEnding() {
+            const endLayer = document.getElementById('ending-layer');
+            const endTitle = document.getElementById('end-title');
+            const endDesc = document.getElementById('end-desc');
+            const charImg = document.getElementById('char-img');
+            
+            endLayer.classList.remove('hidden');
+
+            if (lovePoints >= 80) {
+                endTitle.innerText = "🎉 完美結局：陷入熱戀";
+                endTitle.style.color = "#ff7675";
+                endDesc.innerText = "你們聊得非常投機，決定立刻去看午夜場電影！";
+                charImg.innerText = "😘";
+            } else if (lovePoints >= 40) {
+                endTitle.innerText = "😐 普通結局：朋友卡";
+                endTitle.style.color = "#aaa";
+                endDesc.innerText = "氣氛有點尷尬，喝完咖啡後你們就各自回家了。";
+                charImg.innerText = "🙂";
+            } else {
+                endTitle.innerText = "💔 悲慘結局：被討厭了";
+                endTitle.style.color = "#636e72";
+                endDesc.innerText = "她覺得你是個怪人，假裝接電話逃跑了...";
+                charImg.innerText = "😡";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《母親童靈眼》電影預告大會考</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e0e0e0;
+            --accent-color: #8a0000; /* 血紅色 */
+            --card-bg: #1a1a1a;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at center, #1a0000 0%, #000000 100%);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(138, 0, 0, 0.2);
+            text-align: center;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 頂部裝飾線 */
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px #000;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .game-box { display: none; animation: fadeIn 0.5s; }
+        .game-box.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            margin-bottom: 20px;
+            border-radius: 2px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin: 2rem 0;
+            line-height: 1.6;
+            font-weight: bold;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #222;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn:hover:not(:disabled) {
+            border-color: var(--accent-color);
+            color: #fff;
+            background: #330000;
+            box-shadow: 0 0 10px rgba(138, 0, 0, 0.4);
+        }
+
+        .btn:disabled { cursor: default; opacity: 0.7; }
+        .btn.correct { background-color: #155724; border-color: #28a745; color: #fff; }
+        .btn.wrong { background-color: #4a0000; border-color: #dc3545; color: #fff; }
+
+        .next-btn {
+            margin-top: 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 2px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .next-btn:hover { background-color: #b30000; }
+
+        /* 獎勵票券樣式 */
+        .ticket-container {
+            display: none;
+            margin-top: 20px;
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            position: relative;
+            border-radius: 5px;
+            /* 票券邊緣鋸齒效果 */
+            background-image: radial-gradient(circle at 0 50%, transparent 10px, #fff 11px),
+                              radial-gradient(circle at 100% 50%, transparent 10px, #fff 11px);
+            background-size: 50% 100%;
+            background-repeat: no-repeat;
+            background-position: 0 0, 100% 0;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+        }
+        
+        .ticket-content {
+            border: 2px dashed #000;
+            padding: 15px;
+            text-align: center;
+        }
+        .ticket-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; color: var(--accent-color); }
+        .ticket-info { font-size: 0.9rem; margin: 5px 0; font-weight: bold; }
+        .ticket-code { 
+            font-family: 'Courier New', monospace; 
+            font-size: 1.2rem; 
+            letter-spacing: 3px; 
+            margin-top: 10px; 
+            background: #000; 
+            color: #fff; 
+            padding: 5px;
+            display: inline-block;
+        }
+        .ticket-note { font-size: 0.7rem; color: #666; margin-top: 5px; }
+
+        /* 失敗/普通結果 */
+        .fail-message { color: #888; margin-top: 20px; line-height: 1.6; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 首頁 -->
+        <div id="start-screen" class="game-box active">
+            <h1 style="color:var(--accent-color)">母親童靈眼</h1>
+            <h1>電影預告大會考</h1>
+            <p class="subtitle">絕對不能讓任何人進到家裡...<br>答對全部 7 題，即可獲得驚喜獎勵。</p>
+            <button class="btn" style="width:100%; background:var(--accent-color); color:white; border:none;" onclick="startGame()">開始挑戰</button>
+        </div>
+
+        <!-- 遊戲頁面 -->
+        <div id="quiz-screen" class="game-box">
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#666;">
+                <span id="progress-text">Question 1 / 7</span>
+                <span>單選題</span>
+            </div>
+            
+            <div class="question-text" id="question-display">題目載入中...</div>
+            
+            <div class="options-grid" id="options-container"></div>
+
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題</button>
+        </div>
+
+        <!-- 結算頁面 -->
+        <div id="result-screen" class="game-box">
+            <h2 id="result-title">挑戰結束</h2>
+            <div id="result-score" style="font-size:2rem; font-weight:bold; margin:10px 0;"></div>
+            
+            <!-- 成功：顯示票券 -->
+            <div id="success-ticket" class="ticket-container">
+                <div class="ticket-content">
+                    <div class="ticket-title">電影特映兌換券</div>
+                    <div class="ticket-info">母親童靈眼 (HOMECAM)</div>
+                    <div class="ticket-info">憑此畫面可兌換電影票乙張</div>
+                    <div class="ticket-code">WIN-2024-1128</div>
+                    <div class="ticket-note">※截圖無效 (開玩笑的，請截圖兌換)</div>
+                </div>
+                <p style="font-size:0.8rem; color:black; margin-top:10px;">恭喜全對！請截圖此畫面領獎</p>
+            </div>
+
+            <!-- 失敗：顯示訊息 -->
+            <div id="fail-message" class="fail-message">
+                <p>很遺憾，你沒有全部答對。<br>那個東西... 已經進到你家了嗎？</p>
+                <button class="btn" onclick="location.reload()" style="margin-top:15px;">再挑戰一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 題目資料 (依照預告片內容設計)
+        const questionBank = [
+            {
+                question: "根據預告片開頭 Logo，這部電影在台灣的發行片商是？",
+                options: ["可樂電影", "車庫娛樂", "采昌國際"],
+                answer: 0 // 可樂電影
+            },
+            {
+                question: "這部電影《母親童靈眼》的出品國家是？",
+                options: ["泰國", "韓國", "日本"],
+                answer: 1 // 韓國 (聽語言及演員)
+            },
+            {
+                question: "預告片中，母親為了隨時看到女兒，在家中安裝了什麼設備？",
+                options: ["智慧手錶", "寵物監視器 (Homecam)", "針孔攝影機"],
+                answer: 1 // 寵物監視器
+            },
+            {
+                question: "預告片中出現的上映日期是？",
+                options: ["10.31", "11.28", "12.25"],
+                answer: 1 // 11.28
+            },
+            {
+                question: "本片的女主角（飾演母親）是由哪位知名女星飾演？",
+                options: ["孫藝真", "宋慧喬", "尹世雅"],
+                answer: 2 // 尹世雅
+            },
+            {
+                question: "預告片一開始，主角提到從「哪裡」傳來了叮叮的聲音？",
+                options: ["天花板上", "床底下", "隔壁房間"],
+                answer: 1 // 床底下
+            },
+            {
+                question: "預告片尾聲，女兒對著鏡頭/母親說了一句令人毛骨悚然的話，那是？",
+                options: ["媽，我肚子好餓", "媽，你是誰？", "媽，你要殺了我嗎？"],
+                answer: 2 // 媽，你要殺了我嗎？
+            }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        function startGame() {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('quiz-screen').classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const data = questionBank[currentIndex];
+            
+            // 更新進度條
+            const progress = ((currentIndex) / questionBank.length) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+            document.getElementById('progress-text').innerText = `Question ${currentIndex + 1} / ${questionBank.length}`;
+
+            // 設定題目
+            document.getElementById('question-display').innerText = data.question;
+            
+            // 產生選項
+            const optsContainer = document.getElementById('options-container');
+            optsContainer.innerHTML = '';
+            
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, btn);
+                optsContainer.appendChild(btn);
+            });
+
+            document.getElementById('next-btn').style.display = 'none';
+        }
+
+        function checkAnswer(selectedIdx, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const data = questionBank[currentIndex];
+            const correctIdx = data.answer;
+            const allBtns = document.querySelectorAll('.options-grid .btn');
+
+            if (selectedIdx === correctIdx) {
+                btnElement.classList.add('correct');
+                score++;
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[correctIdx].classList.add('correct'); // 顯示正解
+            }
+
+            allBtns.forEach(btn => btn.disabled = true);
+            
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.style.display = 'inline-block';
+            nextBtn.innerText = (currentIndex === questionBank.length - 1) ? "查看結果" : "下一題";
+        }
+
+        function nextQuestion() {
+            if (currentIndex < questionBank.length - 1) {
+                currentIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quiz-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+            
+            const scoreDiv = document.getElementById('result-score');
+            scoreDiv.innerText = `${score} / ${questionBank.length}`;
+            
+            if (score === questionBank.length) {
+                // 全對
+                document.getElementById('result-title').innerText = "恭喜通關";
+                document.getElementById('result-title').style.color = "#28a745";
+                document.getElementById('success-ticket').style.display = "block";
+                document.getElementById('fail-message').style.display = "none";
+            } else {
+                // 失敗
+                document.getElementById('result-title').innerText = "挑戰失敗";
+                document.getElementById('result-title').style.color = "#dc3545";
+                document.getElementById('success-ticket').style.display = "none";
+                document.getElementById('fail-message').style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>

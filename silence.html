@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>默殺：無聲之地 - 電影挑戰賽</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #1a1a1a;
+            --primary: #8a0a0a; /* 血紅 */
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(60,0,0,0.9)), url('silence.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(20, 20, 20, 0.95);
+            width: 95%; /* 稍微加寬一點給100個數字用 */
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 4px;
+            box-shadow: 0 0 50px rgba(138, 10, 10, 0.5);
+            text-align: center;
+            position: relative;
+            border: 1px solid #333;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .poster-img {
+            width: 100%;
+            max-width: 280px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 5px; font-size: 2rem; letter-spacing: 5px; text-shadow: 2px 2px 0px #000; }
+        .subtitle { color: #888; font-size: 1rem; margin-bottom: 20px; letter-spacing: 2px; }
+
+        .game-section { display: none; animation: fadeIn 0.8s; }
+        .game-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; filter: blur(5px); } to { opacity: 1; filter: blur(0); } }
+
+        .question-text { font-size: 1.3rem; font-weight: bold; margin: 30px 0; line-height: 1.6; color: #fff; text-shadow: 0 2px 4px black; }
+        .options-grid { display: grid; gap: 15px; }
+
+        .btn {
+            background: #222; border: 1px solid #444; padding: 15px; font-size: 1.1rem; color: #ccc;
+            cursor: pointer; transition: 0.3s; font-family: inherit; position: relative; overflow: hidden;
+        }
+        .btn:hover { border-color: var(--primary); color: #fff; background: #3a0505; box-shadow: 0 0 15px rgba(138, 10, 10, 0.4); }
+
+        .ig-btn {
+            background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d);
+            color: white; border: none; width: 100%; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(193, 53, 132, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.02);} 100% {transform: scale(1);} }
+
+        /* 修復版 YT 容器 */
+        .video-wrapper {
+            width: 100%;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .video-wrapper iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9; /* 新式寫法，更穩定 */
+            display: block;
+        }
+
+        /* 100個數字網格 */
+        .grid-100 {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 電腦版 10 列 */
+            gap: 5px;
+            margin-top: 10px;
+        }
+        /* 手機版改為 5 列，不然太擠 */
+        @media (max-width: 600px) {
+            .grid-100 { grid-template-columns: repeat(5, 1fr); }
+        }
+
+        .num-btn {
+            background: #111; color: #666; border: 1px solid #333;
+            padding: 8px 0; font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+        }
+        .num-btn:hover { background: #333; color: white; border-color: #666; }
+
+        /* 額滿公告樣式 */
+        .full-notice {
+            background: #222;
+            border: 2px solid #555;
+            padding: 30px;
+            margin-top: 20px;
+        }
+        .full-stamp {
+            color: #ff4444;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border: 3px solid #ff4444;
+            display: inline-block;
+            padding: 10px 20px;
+            transform: rotate(-10deg);
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .home-btn { position: absolute; top: 15px; left: 15px; text-decoration: none; color: #666; font-size: 0.9rem; border: 1px solid #333; padding: 5px 10px; z-index: 10; }
+        .home-btn:hover { color: white; border-color: white; }
+        .hidden { display: none !important; }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-8px);} 75% {transform: translateX(8px);} }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn">🏠 回大廳</a>
+
+    <div class="container">
+        
+        <!-- 首頁 -->
+        <div id="start-screen" class="game-section active">
+            <img src="silence.jpg" alt="默殺海報" class="poster-img" onerror="this.style.display='none'">
+            <h1>默殺</h1>
+            <p class="subtitle">沉默不是金，沉默是幫兇</p>
+            
+            <div style="text-align:left; background:rgba(0,0,0,0.5); padding:15px; border-left:3px solid var(--primary); margin-bottom:20px; font-size:0.9rem; line-height:1.6;">
+                <strong style="color:var(--primary)">🩸 最終生存挑戰：</strong><br>
+                1. 必須先加入 IG 好友。<br>
+                2. 挑戰 10 題劇情題，<span style="color:#ff4444">答錯一題直接淘汰</span>。<br>
+                3. 通關後進入「百人輪盤」，<br>
+                　 選中命運數字，即刻揭曉結果。
+            </div>
+
+            <div id="ig-lock-area">
+                <button class="btn ig-btn" onclick="checkIG()">
+                    📸 追蹤 @kinpletw 解鎖挑戰
+                </button>
+            </div>
+
+            <div id="real-start-area" class="hidden">
+                <button class="btn" style="background:var(--primary); color:white; width:100%; border:none;" onclick="startGame()">
+                    🔪 開始挑戰
+                </button>
+            </div>
+        </div>
+
+        <!-- 遊戲區 -->
+        <div id="game-screen" class="game-section">
+            <div style="color:#666; font-size:0.9rem;" id="progress-text">Level 1 / 10</div>
+            <div class="question-text" id="q-text">題目載入中...</div>
+            <div class="options-grid" id="opt-container"></div>
+        </div>
+
+        <!-- 命運輪盤區 (100個數字) -->
+        <div id="lucky-screen" class="game-section">
+            <!-- 預告片 -->
+            <div class="video-wrapper">
+                <iframe src="https://www.youtube.com/embed/yE_pWq8uGv0?autoplay=1&mute=1&playsinline=1" title="默殺預告片" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+
+            <h2 style="color:var(--primary); margin:10px 0;">命運輪盤</h2>
+            <p style="color:#aaa; font-size:0.9rem; margin-bottom:5px;">請從 100 個數字中，選出你的命運：</p>
+            
+            <!-- 這裡會由 JS 產生 100 個按鈕 -->
+            <div class="grid-100" id="lucky-grid"></div>
+        </div>
+
+        <!-- 失敗畫面 -->
+        <div id="fail-screen" class="game-section">
+            <h2 style="color:#888; font-size:2rem;">沉默...</h2>
+            <p id="fail-msg">你被淘汰了。</p>
+            <button class="btn" style="margin-top:30px;" onclick="location.reload()">重新輪迴</button>
+        </div>
+
+        <!-- 額滿公告畫面 (不管選哪個數字都來這) -->
+        <div id="full-screen" class="game-section">
+            <div class="full-notice">
+                <div class="full-stamp">已額滿</div>
+                <h2 style="color:white; margin-top:20px;">感謝熱烈支持！</h2>
+                <p style="color:#ccc; line-height:1.6; font-size:1.1rem;">
+                    本次 <strong>鴻聯國際 電影全期交換券</strong><br>
+                    已全數發送完畢。
+                </p>
+                <hr style="border-color:#444; margin:20px 0;">
+                <p style="color:#888; font-size:0.9rem;">
+                    雖然這次來晚了一步，<br>
+                    但請持續關注粉絲頁，更多活動即將登場！
+                </p>
+            </div>
+            
+            <button class="btn" style="margin-top:20px;" onclick="location.href='index.html'">回遊戲大廳</button>
+        </div>
+
+    </div>
+
+    <script>
+        // IG 檢查
+        function checkIG() {
+            window.open('https://www.instagram.com/kinpletw/', '_blank');
+            setTimeout(() => {
+                document.getElementById('ig-lock-area').classList.add('hidden');
+                document.getElementById('real-start-area').classList.remove('hidden');
+            }, 1000);
+        }
+
+        // 題目資料
+        const questionData = [
+            { q: "《默殺》這部電影的導演是誰？", a: "柯汶利", opts: ["柯汶利", "陳思誠", "徐崢", "寧浩"] },
+            { q: "在片中飾演清潔工「李涵」，並憑此片獲得亞太影展最佳女主角的是誰？", a: "張鈞甯", opts: ["張鈞甯", "周迅", "桂綸鎂", "林心如"] },
+            { q: "電影推廣曲《暮色迴響》的演唱者，以細膩具穿透力的嗓音詮釋了悲痛與壓抑，她是？", a: "張韶涵", opts: ["張韶涵", "鄧紫棋", "田馥甄", "蔡依林"] },
+            { q: "曾以《長江七號》走紅的徐嬌，在本片中飾演校工林在福的女兒，她的角色名字是？", a: "惠君", opts: ["惠君", "小彤", "安琪", "李涵"] },
+            { q: "在片中飾演負責追查失蹤案的「戴警官」，是由哪位實力派港星飾演？", a: "吳鎮宇", opts: ["吳鎮宇", "劉德華", "郭富城", "梁家輝"] },
+            { q: "校慶總彩排當天，一具失蹤者的屍體是隨著什麼東西從天而降，造成全校混亂？", a: "彩球", opts: ["彩球", "國旗", "布條", "煙火"] },
+            { q: "飾演校工「林在福」，女兒曾在此就讀卻意外離世的演員是誰？", a: "王傳君", opts: ["王傳君", "黃渤", "胡歌", "彭于晏"] },
+            { q: "根據海報資訊，本片票房飆破了多少新台幣，勇奪年度懸疑片冠軍？", a: "60億", opts: ["60億", "30億", "100億", "10億"] },
+            { q: "本片的上映日期是 12月5日，海報上的核心標語是什麼？", a: "向暴力說不", opts: ["向暴力說不", "沉默是金", "拒絕霸凌", "無聲吶喊"] },
+            { q: "本片在「第61屆亞太影展」中，除了最佳女主角外，還獲得了哪個技術獎項？", a: "最佳剪輯", opts: ["最佳剪輯", "最佳攝影", "最佳音效", "最佳美術設計"] }
+        ];
+
+        let currentLevel = 0;
+        let shuffledQuestions = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            currentLevel = 0;
+            shuffledQuestions = shuffle([...questionData]);
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('game-screen').classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const data = shuffledQuestions[currentLevel];
+            document.getElementById('progress-text').innerText = `Level ${currentLevel + 1} / 10`;
+            document.getElementById('q-text').innerText = data.q;
+            const optContainer = document.getElementById('opt-container');
+            optContainer.innerHTML = '';
+            
+            let currentOptions = shuffle([...data.opts]);
+            currentOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, data.a);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct) {
+            if (selected === correct) {
+                currentLevel++;
+                if (currentLevel >= 10) {
+                    initLuckyDraw();
+                } else {
+                    loadQuestion();
+                }
+            } else {
+                document.querySelector('.container').classList.add('shake');
+                setTimeout(() => {
+                    document.querySelector('.container').classList.remove('shake');
+                    showFail("你選錯了，真相石沉大海。");
+                }, 400);
+            }
+        }
+
+        function initLuckyDraw() {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('lucky-screen').classList.add('active');
+            const grid = document.getElementById('lucky-grid');
+            grid.innerHTML = '';
+            
+            // 產生 100 個數字
+            for(let i=1; i<=100; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'num-btn';
+                btn.innerText = i;
+                // 不管按哪個，都去 showFull()
+                btn.onclick = () => showFull();
+                grid.appendChild(btn);
+            }
+        }
+
+        function showFull() {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('full-screen').classList.add('active');
+        }
+
+        function showFail(msg) {
+            document.getElementById('fail-msg').innerText = msg;
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('fail-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>

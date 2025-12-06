@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扶桑花女孩 - 電影包場挑戰賽</title>
+    <style>
+        :root {
+            /* 漸層紅色背景 */
+            --bg-start: #8E0E00;
+            --bg-end: #1F1C18;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --primary: #c92a2a;
+            --accent: #ffb347; /* 扶桑花橘黃色 */
+            --text: #333;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-top: 5px solid var(--accent);
+        }
+
+        /* 海報圖片 */
+        .poster-img {
+            width: 100%;
+            max-width: 250px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        /* 遊戲區域切換 */
+        .game-section { display: none; animation: fadeIn 0.5s; }
+        .game-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 20px 0;
+            line-height: 1.5;
+            color: #000;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #444;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #fff5f5;
+        }
+
+        /* IG 按鈕專用樣式 */
+        .ig-btn {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
+            color: white; 
+            border: none;
+            width: 100%;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(220, 39, 67, 0.4);
+            animation: pulse 2s infinite;
+        }
+        .ig-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(220, 39, 67, 0.6);
+            color: white;
+            border: none;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        /* 回大廳按鈕 */
+        .home-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 10;
+        }
+        .home-btn:hover { background: rgba(0,0,0,0.6); color: white; }
+
+        /* 票券樣式 */
+        .ticket {
+            background: linear-gradient(to right, #fff, #fff0f0);
+            border: 2px dashed var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            position: relative;
+        }
+        .ticket h2 { color: var(--primary); margin: 0 0 10px 0; }
+        .ticket-info { font-size: 1.1rem; font-weight: bold; margin: 5px 0; color: #333; }
+        .ticket-time { font-size: 1.5rem; color: #000; margin: 10px 0; background: var(--accent); display: inline-block; padding: 5px 15px; border-radius: 5px; }
+        
+        /* 特別強調規則 */
+        .rule-highlight {
+            background: #d63031;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        /* 進度條 */
+        .progress {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 錯誤震動動畫 */
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* 隱藏元素 */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn">🏠 回大廳</a>
+
+    <div class="container">
+        
+        <!-- 首頁 -->
+        <div id="start-screen" class="game-section active">
+            <img src="poster.jpg" alt="扶桑花女孩海報" class="poster-img" onerror="this.style.display='none'">
+            
+            <h1>扶桑花女孩</h1>
+            <p class="subtitle">4K Remastered 花漾再現<br>李相日導演作品大會考</p>
+            
+            <div style="background:#fff3cd; padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid #ffeeba; color:#856404;">
+                <strong>活動規則：</strong><br>
+                挑戰 10 題殊死戰，全對者請截圖<br>
+                私訊「DJ金寶」FB粉絲頁<br>
+                <span style="color:#d63031; font-weight:bold;">前 5 名才有機會入場！</span>
+            </div>
+
+            <!-- IG 驗證區塊 -->
+            <div id="ig-lock-area">
+                <p style="color:#666; margin-bottom:10px;">👇 需先加入 IG 好友才能解鎖按鈕</p>
+                <button class="btn ig-btn" onclick="checkIG()">
+                    📸 追蹤 @kinpletw 解鎖挑戰
+                </button>
+            </div>
+
+            <!-- 真正的開始按鈕 (預設隱藏) -->
+            <div id="real-start-area" class="hidden">
+                <p style="color:#28a745; font-weight:bold; margin-bottom:10px;">✅ 已解鎖！祝你挑戰成功！</p>
+                <button class="btn" style="background:var(--primary); color:white; width:100%;" onclick="startGame()">
+                    🔥 開始挑戰
+                </button>
+            </div>
+
+        </div>
+
+        <!-- 遊戲區 -->
+        <div id="game-screen" class="game-section">
+            <div class="progress" id="progress-text">Level 1 / 10</div>
+            <div class="question-text" id="q-text">題目載入中...</div>
+            <div class="options-grid" id="opt-container">
+                <!-- 選項由 JS 產生 -->
+            </div>
+        </div>
+
+        <!-- 失敗畫面 -->
+        <div id="fail-screen" class="game-section">
+            <h2 style="color:#d63031; font-size:2rem;">挑戰失敗 💔</h2>
+            <p>很遺憾，你的草裙舞步亂掉了...</p>
+            <p>這是一個殘酷的考驗，<br>請重新整理心情，從頭再來！</p>
+            <button class="btn" style="background:#333; color:white; margin-top:20px;" onclick="location.reload()">再試一次</button>
+        </div>
+
+        <!-- 成功畫面 -->
+        <div id="win-screen" class="game-section">
+            <h1 style="color:var(--primary)">🎉 恭喜通關！</h1>
+            <p>你對李相日導演與扶桑花女孩是真愛！</p>
+            
+            <div class="ticket">
+                <h2>特映會資格憑證</h2>
+                <div class="ticket-info">電影：扶桑花女孩 (4K修復版)</div>
+                <div class="ticket-time">11/28 (四) 19:30</div>
+                
+                <div class="rule-highlight">
+                    請截圖此畫面並私訊<br>
+                    FB：「DJ金寶」粉絲頁<br>
+                    <span style="font-size:0.9rem; background:white; color:#d63031; padding:2px 8px; border-radius:4px; margin-top:5px; display:inline-block;">⚠️ 限前 5 名才有機會</span>
+                </div>
+
+                <p style="font-size:0.8rem; color:#666; margin-top:10px;">(截圖時間越早，機會越大)</p>
+            </div>
+            
+            <button class="btn" style="margin-top:20px;" onclick="location.href='index.html'">回遊戲大廳</button>
+        </div>
+
+    </div>
+
+    <script>
+        // IG 檢查邏輯
+        function checkIG() {
+            // 1. 開啟 IG 連結
+            window.open('https://www.instagram.com/kinpletw/', '_blank');
+            
+            // 2. 解鎖按鈕 (延遲一點點讓使用者感覺有在檢查)
+            setTimeout(() => {
+                document.getElementById('ig-lock-area').classList.add('hidden');
+                document.getElementById('real-start-area').classList.remove('hidden');
+            }, 1000);
+        }
+
+        // 題目資料庫
+        const questionData = [
+            { q: "電影《扶桑花女孩》的故事背景發生在哪一個國家？", a: "日本", opts: ["日本", "韓國", "泰國", "夏威夷"] },
+            { q: "《扶桑花女孩》的導演是哪一位？（也是近期《國寶》的導演）", a: "李相日", opts: ["李相日", "是枝裕和", "岩井俊二", "侯孝賢"] },
+            { q: "在電影中，飾演從東京來的舞蹈老師「平山圓香」的是哪位女星？", a: "松雪泰子", opts: ["松雪泰子", "蒼井優", "廣末涼子", "深田恭子"] },
+            { q: "這部電影描寫的是哪一種產業沒落後，小鎮力求轉型的故事？", a: "煤礦業", opts: ["煤礦業", "漁業", "紡織業", "鋼鐵業"] },
+            { q: "根據海報資訊，這次重新上映的版本是什麼規格？", a: "4K Remastered", opts: ["4K Remastered", "3D立體版", "IMAX版", "黑白導演版"] },
+            { q: "飾演女主角「紀美子」，並憑此片橫掃日本多項大獎的女演員是？", a: "蒼井優", opts: ["蒼井優", "宮崎葵", "長澤雅美", "新垣結衣"] },
+            { q: "李相日導演備受矚目的最新力作，改編自吉田修一小說的電影是？", a: "國寶", opts: ["國寶", "惡人", "怒", "流浪之月"] },
+            { q: "海報上顯示的上映日期（花漾再現）是幾月幾號？", a: "12月5日", opts: ["12月5日", "11月28日", "12月25日", "1月1日"] },
+            { q: "除了兩位女主角外，海報上列出的知名男演員是誰？", a: "豐川悅司", opts: ["豐川悅司", "阿部寬", "妻夫木聰", "渡邊謙"] },
+            { q: "《扶桑花女孩》曾獲得哪一個日本最高榮譽的電影獎項肯定？", a: "日本電影金像獎最佳影片", opts: ["日本電影金像獎最佳影片", "坎城影展金棕櫚獎", "奧斯卡最佳外語片", "金馬獎最佳劇情片"] }
+        ];
+
+        let currentLevel = 0;
+        let shuffledQuestions = [];
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            currentLevel = 0;
+            shuffledQuestions = shuffle([...questionData]);
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('game-screen').classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const data = shuffledQuestions[currentLevel];
+            document.getElementById('progress-text').innerText = `Level ${currentLevel + 1} / 10`;
+            document.getElementById('q-text').innerText = data.q;
+
+            const optContainer = document.getElementById('opt-container');
+            optContainer.innerHTML = '';
+
+            let currentOptions = shuffle([...data.opts]);
+            currentOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, data.a);
+                optContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct) {
+            if (selected === correct) {
+                currentLevel++;
+                if (currentLevel >= 10) {
+                    showWin();
+                } else {
+                    loadQuestion();
+                }
+            } else {
+                document.querySelector('.container').classList.add('shake');
+                setTimeout(() => {
+                    document.querySelector('.container').classList.remove('shake');
+                    showFail();
+                }, 500);
+            }
+        }
+
+        function showFail() {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('fail-screen').classList.add('active');
+        }
+
+        function showWin() {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('win-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>

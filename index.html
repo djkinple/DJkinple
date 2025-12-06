@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ金寶的遊戲中心</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #666;
+            --accent: #e74c3c;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            padding: 40px 20px;
+            text-align: center;
+            background: #2c3e50;
+            color: white;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 { margin: 0; font-size: 2rem; letter-spacing: 1px; }
+        .subtitle { color: #bdc3c7; margin-top: 10px; font-size: 0.9rem; }
+
+        .main-container {
+            width: 90%;
+            max-width: 1100px;
+            margin-bottom: 50px;
+        }
+
+        /* --- 主打區 --- */
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--accent);
+            padding-left: 15px;
+            font-weight: bold;
+        }
+
+        .hero-card {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.3s;
+            margin-bottom: 50px;
+            flex-direction: column; 
+        }
+
+        @media (min-width: 768px) {
+            .hero-card { flex-direction: row; height: 350px; }
+        }
+
+        .hero-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+
+        .hero-img {
+            flex: 1.5;
+            /* 🔗 使用新的高畫質海報連結 */
+            background-image: url('https://srm.com.tw/images/%E9%9B%BB%E5%BD%B1%E6%B5%B7%E5%A0%B1/%E6%8F%9B%E4%B9%98%E7%9C%9F%E6%84%9B..webp');
+            background-size: cover;
+            background-position: center top; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 250px;
+        }
+
+        .hero-content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-badge {
+            background: #a18cd1;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+            width: fit-content;
+            margin-bottom: 15px;
+        }
+
+        .hero-title { font-size: 2rem; margin: 0 0 15px 0; font-weight: bold; }
+        .hero-desc { font-size: 1.1rem; color: var(--text-sub); line-height: 1.6; }
+
+        /* --- 網格區 --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+
+        .card-img {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .style-silence { background: linear-gradient(to bottom, #2c3e50, #000); color: #ccc; }
+        .style-hula { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .style-money { background: #d4af37; color: white; }
+        .style-movie { background: #333; color: #e74c3c; }
+        .style-baseball { background: #27ae60; color: white; }
+
+        .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .card-desc { font-size: 0.9rem; color: #7f8c8d; line-height: 1.5; margin-bottom: 15px; flex: 1; }
+        .card-footer { font-size: 0.8rem; color: #bdc3c7; text-align: right; margin-top: auto; }
+
+        footer { 
+            margin-top: auto; 
+            padding: 20px; 
+            color: #95a5a6; 
+            font-size: 0.8rem; 
+            text-align: center;
+        }
+        footer a { color: #95a5a6; text-decoration: none; border-bottom: 1px dashed #95a5a6; }
+        footer a:hover { color: #2c3e50; border-color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎮 DJ金寶的遊戲中心</h1>
+        <div class="subtitle">互動問答．心理測驗．獨家抽獎</div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- 最新主打 (換乘真愛) -->
+        <div class="section-title">✨ 本月最新主打</div>
+        
+        <a href="eternity.html" class="hero-card">
+            <div class="hero-img"></div>
+            <div class="hero-content">
+                <div class="hero-badge">NEW ARRIVAL</div>
+                <h2 class="hero-title">換乘真愛 (Eternity)</h2>
+                <p class="hero-desc">
+                    A24 年度催淚大片《換乘真愛》電影聯動！<br>
+                    陪了妳一輩子的人 vs 等了妳一輩子的人。<br>
+                    在靈魂轉運站的七日拷問，如果是妳，會選擇誰？
+                </p>
+                <div style="margin-top: 20px; color: #a18cd1; font-weight: bold;">立即體驗 &rarr;</div>
+            </div>
+        </a>
+
+        <!-- 經典回顧 -->
+        <div class="section-title">📂 經典遊戲存檔</div>
+        
+        <div class="grid-container">
+            <a href="silence.html" class="card">
+                <div class="card-img style-silence">🔪</div>
+                <div class="card-body">
+                    <div class="card-title">默殺：無聲之地</div>
+                    <div class="card-desc">殊死戰+命運輪盤！選中唯一真相數字「17」才能存活！</div>
+                    <div class="card-footer">懸疑驚悚</div>
+                </div>
+            </a>
+
+            <a href="hulagirls.html" class="card">
+                <div class="card-img style-hula">🌺</div>
+                <div class="card-body">
+                    <div class="card-title">扶桑花女孩</div>
+                    <div class="card-desc">李相日導演作品！全對者截圖私訊搶特映資格！</div>
+                    <div class="card-footer">溫馨感人</div>
+                </div>
+            </a>
+
+            <a href="millionaire.html" class="card">
+                <div class="card-img style-money">💰</div>
+                <div class="card-body">
+                    <div class="card-title">棒球百萬富翁</div>
+                    <div class="card-desc">中職36年特別版！挑戰 15 題連鎖關卡，奪千萬獎金！</div>
+                    <div class="card-footer">益智挑戰</div>
+                </div>
+            </a>
+
+            <a href="homecam.html" class="card">
+                <div class="card-img style-movie">👁️</div>
+                <div class="card-body">
+                    <div class="card-title">母親童靈眼</div>
+                    <div class="card-desc">暗黑驚悚電影預告問答，全對可獲得驚喜獎勵。</div>
+                    <div class="card-footer">恐怖靈異</div>
+                </div>
+            </a>
+
+            <a href="baseball.html" class="card">
+                <div class="card-img style-baseball">⚾</div>
+                <div class="card-body">
+                    <div class="card-title">中職 35 年大會考</div>
+                    <div class="card-desc">你是真球迷嗎？挑戰 10 道棒球歷史題目！</div>
+                    <div class="card-footer">運動體育</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 <a href="https://www.facebook.com/djkinple" target="_blank">DJ金寶</a> 製作 | 用戶體驗優化版
+    </footer>
+
+</body>
+</html>
